@@ -1,0 +1,10 @@
+input_video: "data/input/IMG_7304 2.MOV"
+workspace_dir: outputs/img_7304_2_hq
+fps: 2.0
+max_frames: 60
+max_long_side: 720
+train_iterations: 5000
+render_mode: novel_views
+gaussian_repo_dir: third_party/gaussian-splatting
+antialiasing: true
+data_device: cpu

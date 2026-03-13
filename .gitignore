@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+data/input/*
+!data/input/.gitkeep
+
+outputs/*
+!outputs/.gitkeep
+
+third_party/gaussian-splatting/
+!third_party/.gitkeep
+
+browser_viewer/node_modules/
+browser_viewer/package-lock.json

@@ -1,0 +1,8 @@
+{
+  "name": "face-gaussian-browser-viewer",
+  "private": true,
+  "description": "Minimal tooling for exporting a browser Gaussian viewer",
+  "dependencies": {
+    "@playcanvas/splat-transform": "^1.8.2"
+  }
+}

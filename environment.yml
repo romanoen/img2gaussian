@@ -1,0 +1,24 @@
+name: face-gaussian
+channels:
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  - opencv
+  - pillow
+  - pyyaml
+  - tqdm
+  - plyfile
+  - joblib
+  - ffmpeg
+  - colmap=3.8
+  - cmake
+  - ninja
+  - git
+  - gcc_linux-64=11
+  - gxx_linux-64=11
+  - cuda-cudart=11.8
+  - cuda-cudart-dev=11.8
+  - cuda-nvcc=11.8
