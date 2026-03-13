@@ -1,8 +1,6 @@
-# 3D Face Gaussian
-
 This project takes a single smartphone video and turns it into a static 3D Gaussian scene that you can render from new viewpoints.
 
-I built it as a focused computer-vision portfolio project. The goal is not to invent a new reconstruction method. The goal is to make the full path from raw video to a convincing result understandable, reproducible, and clean enough that another person can read the code without feeling lost.
+I built it as a focused computer-vision portfolio project. The goal is not to invent a new reconstruction method. The goal is to make the full path from raw video to a convincing result understandable, reproducible, and clean enough that another person can read the code without feeling lost. Also it builds the fundament of new upcoming projects in the area of 3d reconstruction. 
 
 ## What the project actually does
 
@@ -16,7 +14,7 @@ smartphone video
   -> Gaussian Splatting training
   -> still renders
   -> demo video
-  -> browser viewer
+  -> browser viewer (easy)
 ```
 
 The current scope is intentionally small:
@@ -27,23 +25,11 @@ The current scope is intentionally small:
 - controlled lighting
 - offline reconstruction
 
-What it does not do:
-
-- no facial editing
-- no text-controlled changes
-- no animation
-- no multi-person scenes
-- no live capture
-
-So even though the repository is called `3D Face Gaussian`, the core representation is still a static Gaussian scene. If the video is mostly a face, the scene becomes face-centered, but the code itself is not a special face-only method.
-
 ## Why the pipeline is structured this way
-
-I wanted the code to stay human-scale.
 
 Instead of building a custom SfM stack, I use `COLMAP` for camera reconstruction because it is reliable and well understood.
 
-Instead of reimplementing Gaussian Splatting, I call a pinned upstream baseline from GraphDeco and keep this repository as a thin orchestration layer around it.
+Instead of reimplementing Gaussian Splatting, I call a pinned upstream baseline from GraphDeco and keep this repository as a thin orchestration layer around it. Its not a new invention but rather a prototype based on given knowledge.
 
 That leaves this repo responsible for the parts that are useful in a portfolio:
 
@@ -72,7 +58,7 @@ The project is kept small on purpose.
 
 ## Environment
 
-The only supported environment manager in this repo is `micromamba`.
+The only supported environment manager in this repo is `micromamba`. 
 
 Create the environment:
 
@@ -155,7 +141,7 @@ Important fields:
 - `gaussian_repo_dir`
   Location of the upstream GraphDeco checkout.
 
-The default preset is meant to be safer on smaller GPUs.
+The default preset is meant to be safer on smaller GPUs. (I run it on a 1060 6GB) 
 
 The high-quality preset pushes the result further, but is slower and more memory-sensitive.
 
@@ -169,7 +155,6 @@ Good capture rules:
 
 - record for about `10-30` seconds
 - keep the subject mostly still
-- move the camera slowly around the face, or rotate the head slowly
 - avoid talking, laughing, or exaggerated expressions
 - avoid motion blur
 - keep lighting stable
@@ -248,7 +233,7 @@ Then open:
 http://127.0.0.1:8765
 ```
 
-This viewer path is intentionally browser-based because it works well over SSH port forwarding and Tailscale. For this project, that is much more practical than depending on a local desktop OpenGL viewer.
+This viewer path is intentionally browser-based because it works well over SSH port forwarding. For this project, that is much more practical than depending on a local desktop OpenGL viewer.
 
 If the npm package used for viewer export is missing, the build step installs it automatically from `browser_viewer/package.json`.
 
@@ -283,8 +268,6 @@ It does not contain:
 
 - a reimplementation of COLMAP
 - a reimplementation of Gaussian Splatting
-- a custom face prior
-- a semantic editing model
 
 That is deliberate. I wanted the moving parts to be visible and understandable instead of burying them inside a larger research codebase.
 
@@ -294,11 +277,7 @@ This project works well as a portfolio reconstruction pipeline, but it has clear
 
 - It depends heavily on capture quality.
 - It is still a static-scene pipeline.
-- It is not robust to large facial motion.
-- A face is only reconstructed well to the extent that the video actually covers it.
 - New viewpoints work best near the observed camera arc.
-
-So the output is a usable 3D Gaussian scene, not a complete editable face model.
 
 ## Troubleshooting
 
