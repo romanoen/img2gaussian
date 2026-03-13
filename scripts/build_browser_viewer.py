@@ -9,8 +9,8 @@ def main() -> None:
 
     ensure_src_on_path()
 
-    from face_gaussian.browser_viewer import build_browser_viewer
-    from face_gaussian.config import load_config
+    from img2gaussian.browser_viewer import build_browser_viewer
+    from img2gaussian.config import load_config
 
     config = load_config(args.config)
     output_html = build_browser_viewer(config, project_root=PROJECT_ROOT)

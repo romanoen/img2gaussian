@@ -20,8 +20,8 @@ def main() -> None:
 
     ensure_src_on_path()
 
-    from face_gaussian.browser_viewer import build_browser_viewer, serve_browser_viewer
-    from face_gaussian.config import build_workspace_paths, load_config
+    from img2gaussian.browser_viewer import build_browser_viewer, serve_browser_viewer
+    from img2gaussian.config import build_workspace_paths, load_config
 
     config = load_config(args.config)
     if args.skip_build:

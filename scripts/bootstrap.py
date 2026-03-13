@@ -16,8 +16,8 @@ def main() -> None:
 
     ensure_src_on_path()
 
-    from face_gaussian.config import load_config
-    from face_gaussian.utils import ensure_binary, run_command
+    from img2gaussian.config import load_config
+    from img2gaussian.utils import ensure_binary, run_command
 
     config = load_config(args.config)
 

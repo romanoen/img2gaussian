@@ -1,78 +1,68 @@
-# 3D Face Gaussian
+# img2gaussian
 
-This project takes a single smartphone video and turns it into a static 3D Gaussian scene that you can render from new viewpoints.
+`img2gaussian` is a small, readable pipeline for turning a single handheld video into a static 3D Gaussian scene.
 
-I built it as a focused computer-vision portfolio project. The goal is not to invent a new reconstruction method. The goal is to make the full path from raw video to a convincing result understandable, reproducible, and clean enough that another person can read the code without feeling lost.
-
-## What the project actually does
-
-The pipeline is:
+The main idea is simple:
 
 ```text
-smartphone video
-  -> frame extraction
-  -> frame selection
-  -> camera pose estimation with COLMAP
-  -> Gaussian Splatting training
-  -> still renders
-  -> demo video
-  -> browser viewer
+video
+  -> extract frames
+  -> keep a sharp, evenly spaced subset
+  -> estimate camera poses with COLMAP
+  -> train a Gaussian Splatting model
+  -> export stills, a demo clip, and a browser viewer
 ```
 
-The current scope is intentionally small:
+This repository is meant to be understandable first. It uses strong external tools where that makes sense, and keeps the project-specific logic in a thin orchestration layer that is easy to read.
 
-- one static subject
-- one handheld phone video
-- neutral expression
-- controlled lighting
-- offline reconstruction
+## What this project does
 
-What it does not do:
+Given one input video, the pipeline:
 
-- no facial editing
-- no text-controlled changes
-- no animation
-- no multi-person scenes
-- no live capture
+- extracts frames with `ffmpeg`
+- filters them down to a cleaner training subset
+- reconstructs camera poses with `COLMAP`
+- trains a 3D Gaussian scene using the GraphDeco Gaussian Splatting baseline
+- exports renders and a browser-based viewer
 
-So even though the repository is called `3D Face Gaussian`, the core representation is still a static Gaussian scene. If the video is mostly a face, the scene becomes face-centered, but the code itself is not a special face-only method.
+The result is a static scene representation that can be viewed from new camera angles.
 
-## Why the pipeline is structured this way
+## Design goals
 
-I wanted the code to stay human-scale.
+The project is built around a few practical goals:
 
-Instead of building a custom SfM stack, I use `COLMAP` for camera reconstruction because it is reliable and well understood.
+- keep the code small and readable
+- make the full pipeline reproducible
+- use one config file per run
+- preserve useful intermediate outputs
+- make the final result easy to inspect locally or over SSH
 
-Instead of reimplementing Gaussian Splatting, I call a pinned upstream baseline from GraphDeco and keep this repository as a thin orchestration layer around it.
+Instead of reimplementing SfM or Gaussian Splatting, this repo focuses on the glue around them:
 
-That leaves this repo responsible for the parts that are useful in a portfolio:
-
-- preparing the input video
-- making the run reproducible
-- choosing conservative defaults
+- input preparation
+- configuration
+- staging the pipeline
 - organizing outputs
-- exporting a demo and an interactive viewer
+- viewer export
 
 ## Repository layout
 
-The project is kept small on purpose.
-
 - `configs/`
-  Holds the YAML presets.
+  YAML presets for different run qualities.
 - `scripts/`
-  Thin CLI entrypoints. Each script does one thing.
-- `src/face_gaussian/`
-  The actual pipeline code.
+  Small CLI entrypoints for setup and pipeline stages.
+- `src/img2gaussian/`
+  The current Python package for the pipeline logic.
 - `third_party/gaussian-splatting/`
-  The pinned upstream baseline.
+  Pinned upstream Gaussian Splatting baseline.
 - `data/input/`
   Input videos.
 - `outputs/`
-  Run artifacts like frames, COLMAP outputs, models, renders, and the browser viewer.
+  Generated frames, reconstructions, models, renders, and viewer exports.
 
 ## Environment
 
-The only supported environment manager in this repo is `micromamba`.
+This project uses `micromamba`.
 
 Create the environment:
 
@@ -81,123 +71,92 @@ micromamba env create -f environment.yml -n face-gaussian
 micromamba activate face-gaussian
 ```
 
-The environment file installs the stable system-side tools this project needs, including:
+The environment includes the stable command-line dependencies:
 
 - Python 3.10
 - `ffmpeg`
 - `colmap`
-- CUDA 11.8 toolchain pieces
-- `cmake`, `ninja`, `git`
+- CUDA 11.8 toolchain packages
+- `cmake`
+- `ninja`
+- `git`
 
-PyTorch is installed separately because the right wheel depends on the local CUDA setup. The default path for this project is `cu118`:
+Install PyTorch separately so the wheel matches the local CUDA setup:
 
 ```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 ```
 
-## Setup after the environment exists
+## Setup
 
-There are two setup scripts.
+After the environment is active, run these two scripts.
 
-### 1. Bootstrap the upstream Gaussian Splatting repo
+Bootstrap the upstream Gaussian Splatting repo:
 
 ```bash
 python scripts/bootstrap.py
 ```
 
-This script:
-
-- checks that `git`, `ffmpeg`, and `colmap` are available
-- clones the upstream Gaussian Splatting repository into `third_party/gaussian-splatting`
-- checks out a pinned commit
-- initializes the upstream submodules
-
-### 2. Install the Python modules used by the upstream trainer
+Install the Python-side Gaussian dependencies:
 
 ```bash
 python scripts/install_gaussian_deps.py
 ```
 
-This script:
+What those scripts do:
 
-- installs PyTorch if it is still missing
-- installs `plyfile` and `joblib`
-- builds and installs the CUDA extensions used by the upstream Gaussian Splatting code
-- verifies that `torch.cuda.is_available()` is true
-
-If this script finishes cleanly, the training side of the project is ready.
+- verify required binaries like `git`, `ffmpeg`, and `colmap`
+- clone and pin the upstream Gaussian Splatting repository
+- install `plyfile` and `joblib`
+- build the required CUDA extensions
+- verify that CUDA is available to PyTorch
 
 ## Configuration
 
-The project is controlled through a single YAML file per preset.
+The pipeline is controlled through YAML config files.
 
-Main presets:
+Included presets:
 
 - [`configs/default.yaml`](configs/default.yaml)
 - [`configs/high_quality.yaml`](configs/high_quality.yaml)
 
-Important fields:
+Important config fields:
 
 - `input_video`
-  Path to the source video.
 - `workspace_dir`
-  Where the run writes all outputs.
 - `fps`
-  Frame extraction rate.
 - `max_frames`
-  Maximum number of selected frames.
 - `max_long_side`
-  Resize target for the longer image side.
 - `train_iterations`
-  Number of Gaussian Splatting optimization steps.
 - `render_mode`
-  How the stills are exported.
 - `gaussian_repo_dir`
-  Location of the upstream GraphDeco checkout.
 
-The default preset is meant to be safer on smaller GPUs.
+`default.yaml` is the safer preset for smaller GPUs.  
+`high_quality.yaml` pushes quality a bit further at the cost of speed and memory.
 
-The high-quality preset pushes the result further, but is slower and more memory-sensitive.
+## Input capture
 
-## How to record a usable video
+This pipeline works best when the input video is recorded like a reconstruction capture instead of a casual clip.
 
-This matters more than most of the code.
-
-The best input for this pipeline is not a casual selfie clip. It is a short, steady capture that gives structure-from-motion enough stable visual information to work with.
-
-Good capture rules:
+Recommended:
 
 - record for about `10-30` seconds
-- keep the subject mostly still
-- move the camera slowly around the face, or rotate the head slowly
-- avoid talking, laughing, or exaggerated expressions
-- avoid motion blur
+- move slowly
 - keep lighting stable
-- leave some background texture visible
+- avoid heavy motion blur
+- keep enough scene texture visible for COLMAP
 
-Bad capture patterns:
-
-- fast handheld motion
-- strong lighting changes
-- heavy blur
-- occlusions from hands or hair
-- lots of facial motion between frames
-
-This project can reconstruct any mostly static scene in principle. It is just tuned and documented around face capture because that is the portfolio use case.
+In practice, this works best on scenes that are mostly static while the video is being recorded.
 
 ## Running the pipeline
 
-### Full run
+Run the full pipeline:
 
 ```bash
 python scripts/run_pipeline.py --config configs/default.yaml
 ```
 
-That runs the whole path from video to rendered outputs.
-
-### Step-by-step run
-
-If you want to inspect intermediate results, run the stages separately:
+Or run each stage separately:
 
 ```bash
 python scripts/extract_frames.py --config configs/default.yaml
@@ -206,31 +165,31 @@ python scripts/run_colmap.py --config configs/default.yaml
 python scripts/train_and_render.py --config configs/default.yaml
 ```
 
-This is usually the better way to debug a new video because you can stop after each stage and check whether the inputs still look healthy.
+Running stage-by-stage is useful when checking a new video, because you can inspect the selected frames and the COLMAP reconstruction before spending time on training.
 
-## What each stage is responsible for
+## Stage breakdown
 
 ### `extract_frames.py`
 
-Reads the configured video with `ffmpeg` and writes raw frames into `frames_raw/`.
+Uses `ffmpeg` to write raw frames into `frames_raw/`.
 
 ### `select_frames.py`
 
-Scores sharpness, keeps an evenly spaced subset, resizes the images, and writes the selected training images into `frames_selected/`.
+Scores sharpness, keeps a cleaner subset, resizes images, and writes them into `frames_selected/`.
 
 ### `run_colmap.py`
 
-Runs the COLMAP stages needed to estimate camera poses and to prepare the dataset layout expected by the Gaussian Splatting baseline.
+Runs the COLMAP steps used to estimate camera poses and prepare the dataset structure expected by the trainer.
 
 ### `train_and_render.py`
 
-Calls the upstream trainer, then exports stills and a demo clip from the trained scene.
+Launches Gaussian Splatting training and then exports still images plus a short demo video.
 
 ## Interactive viewer
 
-The interactive path in this repo is the browser Gaussian viewer.
+The project includes a browser-based Gaussian viewer export.
 
-Build the viewer from the latest trained model:
+Build the viewer:
 
 ```bash
 python scripts/build_browser_viewer.py --config configs/high_quality.yaml
@@ -248,91 +207,37 @@ Then open:
 http://127.0.0.1:8765
 ```
 
-This viewer path is intentionally browser-based because it works well over SSH port forwarding and Tailscale. For this project, that is much more practical than depending on a local desktop OpenGL viewer.
-
-If the npm package used for viewer export is missing, the build step installs it automatically from `browser_viewer/package.json`.
+This viewer path works well over SSH port forwarding or Tailscale because it only needs a local HTTP server.
 
 ## Outputs
 
-Every run writes into the configured `workspace_dir`.
+Each run writes into the configured `workspace_dir`.
 
-Inside that directory you will find:
+Typical outputs:
 
 - `frames_raw/`
-  Raw extracted frames from the input video.
 - `frames_selected/`
-  The subset actually used downstream.
 - `colmap/`
-  Intermediate COLMAP work files.
 - `dataset/`
-  The prepared dataset layout passed to the Gaussian trainer.
 - `model/`
-  The trained Gaussian model and related metadata.
 - `renders/stills/`
-  Exported still images.
 - `renders/demo.mp4`
-  Short demo clip.
 - `browser_gaussian_viewer/index.html`
-  Self-contained browser viewer export.
 
-## What is in this repository and what is not
+## Notes
 
-This repository contains the orchestration layer and the project-specific logic.
+- If `colmap` in the environment is unstable on your machine, you can use a system `colmap` binary and keep the same project code.
+- If CUDA is not available, reinstall the PyTorch wheel inside the active environment.
+- If training runs out of memory, reduce `max_long_side` and `train_iterations`.
 
-It does not contain:
+## Why this repo exists
 
-- a reimplementation of COLMAP
-- a reimplementation of Gaussian Splatting
-- a custom face prior
-- a semantic editing model
+The point of this repository is to make the path from raw video to a usable 3D Gaussian scene easy to follow.
 
-That is deliberate. I wanted the moving parts to be visible and understandable instead of burying them inside a larger research codebase.
+The value here is that the full workflow stays visible:
 
-## Limitations
-
-This project works well as a portfolio reconstruction pipeline, but it has clear limits.
-
-- It depends heavily on capture quality.
-- It is still a static-scene pipeline.
-- It is not robust to large facial motion.
-- A face is only reconstructed well to the extent that the video actually covers it.
-- New viewpoints work best near the observed camera arc.
-
-So the output is a usable 3D Gaussian scene, not a complete editable face model.
-
-## Troubleshooting
-
-### `colmap` is missing or unstable
-
-Use a system `colmap` binary and keep the same Python code path.
-
-### CUDA extensions fail to build
-
-Make sure the `micromamba` environment is active and rerun:
-
-```bash
-python scripts/install_gaussian_deps.py
-```
-
-### `torch.cuda.is_available()` is false
-
-Reinstall the PyTorch wheel inside the active environment:
-
-```bash
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
-```
-
-### GPU runs out of memory
-
-Lower these values in the config:
-
-- `max_long_side`
-- `train_iterations`
-
-If needed, prefer the default preset before trying the high-quality preset.
-
-## Current direction
-
-Right now the repository is about one thing: getting from a real handheld video to a convincing static 3D Gaussian result with code that is straightforward to read.
-
-Future ideas like semantic splat search, editable facial regions, or text-driven controls would sit on top of this foundation, but they are intentionally out of scope here.
+- where the data comes from
+- how it is filtered
+- how reconstruction is staged
+- how training is launched
+- where the final artifacts end up

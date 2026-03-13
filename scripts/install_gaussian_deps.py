@@ -15,8 +15,8 @@ def main() -> None:
 
     ensure_src_on_path()
 
-    from face_gaussian.config import load_config
-    from face_gaussian.utils import python_executable, run_command
+    from img2gaussian.config import load_config
+    from img2gaussian.utils import python_executable, run_command
 
     config = load_config(args.config)
     repo_dir = config.gaussian_repo_dir

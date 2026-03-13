@@ -9,8 +9,8 @@ def main() -> None:
 
     ensure_src_on_path()
 
-    from face_gaussian.config import load_config
-    from face_gaussian.pipeline import run_extract_stage
+    from img2gaussian.config import load_config
+    from img2gaussian.pipeline import run_extract_stage
 
     config = load_config(args.config)
     run_extract_stage(config)
