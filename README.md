@@ -30,6 +30,10 @@ The image below shows one real run from this repository: a handheld phone video 
 
 ![Original video vs reconstructed 3D scene](assets/readme/original_vs_3d.png)
 
+Here are three more stills from the same reconstructed scene:
+
+![Rendered reconstruction stills](assets/readme/reconstruction_stills.png)
+
 The full run also exports:
 
 - a short demo clip at `outputs/.../renders/demo.mp4`
