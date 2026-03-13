@@ -315,4 +315,4 @@ If needed, prefer the default preset before trying the high-quality preset.
 
 ## Current direction
 
-Right now the repository is about one thing: getting from a real handheld video to a convincing static 3D Gaussian result with code that is straightforward to read.
+Right now the repository is about one thing: getting from a real handheld video to a convincing static 3D Gaussian result with code that is straightforward to read. The next big deal will be to connect splats of different captures. (data association) 
