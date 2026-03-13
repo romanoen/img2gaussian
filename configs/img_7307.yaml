@@ -1,0 +1,10 @@
+input_video: "data/input/IMG_7307.MOV"
+workspace_dir: outputs/img_7307
+fps: 2.0
+max_frames: 60
+max_long_side: 640
+train_iterations: 3500
+render_mode: novel_views
+gaussian_repo_dir: third_party/gaussian-splatting
+antialiasing: false
+data_device: cuda

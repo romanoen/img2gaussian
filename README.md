@@ -1,6 +1,6 @@
 This project takes a single smartphone video and turns it into a static 3D Gaussian scene that you can render from new viewpoints.
 
-I built it as a focused computer-vision portfolio project. The goal is not to invent a new reconstruction method. The goal is to make the full path from raw video to a convincing result understandable, reproducible, and clean enough that another person can read the code without feeling lost. Also it builds the fundament of new upcoming projects in the area of 3d reconstruction. 
+I built it as a focused computer-vision portfolio project. The goal is to make the full path from raw video to a convincing result understandable, reproducible, and clean enough that another person can read the code without feeling lost.
 
 ## What the project actually does
 
@@ -19,17 +19,29 @@ smartphone video
 
 The current scope is intentionally small:
 
-- one static subject
+- one mostly static scene
 - one handheld phone video
-- neutral expression
-- controlled lighting
+- stable lighting
 - offline reconstruction
+
+## Example result
+
+The image below shows one real run from this repository: a handheld phone video of a volleyball on a stool, compared against the novel views rendered from the reconstructed Gaussian scene.
+
+![Original video vs reconstructed 3D scene](assets/readme/original_vs_3d.png)
+
+The full run also exports:
+
+- a short demo clip at `outputs/.../renders/demo.mp4`
+- an interactive browser viewer at `outputs/.../browser_gaussian_viewer/index.html`
+
+That combination is what I wanted from the project: a clear path from real video input to a scene that can be inspected from viewpoints that were never recorded directly.
 
 ## Why the pipeline is structured this way
 
 Instead of building a custom SfM stack, I use `COLMAP` for camera reconstruction because it is reliable and well understood.
 
-Instead of reimplementing Gaussian Splatting, I call a pinned upstream baseline from GraphDeco and keep this repository as a thin orchestration layer around it. Its not a new invention but rather a prototype based on given knowledge.
+For Gaussian Splatting, I call a pinned upstream baseline from GraphDeco and keep this repository as a thin orchestration layer around it.
 
 That leaves this repo responsible for the parts that are useful in a portfolio:
 
@@ -149,13 +161,13 @@ The high-quality preset pushes the result further, but is slower and more memory
 
 This matters more than most of the code.
 
-The best input for this pipeline is not a casual selfie clip. It is a short, steady capture that gives structure-from-motion enough stable visual information to work with.
+The best input for this pipeline is a short, steady capture that gives structure-from-motion enough stable visual information to work with.
 
 Good capture rules:
 
 - record for about `10-30` seconds
-- keep the subject mostly still
-- avoid talking, laughing, or exaggerated expressions
+- keep the scene mostly still
+- move the camera slowly and evenly
 - avoid motion blur
 - keep lighting stable
 - leave some background texture visible
@@ -165,10 +177,8 @@ Bad capture patterns:
 - fast handheld motion
 - strong lighting changes
 - heavy blur
-- occlusions from hands or hair
-- lots of facial motion between frames
-
-This project can reconstruct any mostly static scene in principle. It is just tuned and documented around face capture because that is the portfolio use case.
+- heavy occlusions
+- large non-rigid motion in the scene
 
 ## Running the pipeline
 
@@ -260,16 +270,9 @@ Inside that directory you will find:
 - `browser_gaussian_viewer/index.html`
   Self-contained browser viewer export.
 
-## What is in this repository and what is not
+## Design choice
 
-This repository contains the orchestration layer and the project-specific logic.
-
-It does not contain:
-
-- a reimplementation of COLMAP
-- a reimplementation of Gaussian Splatting
-
-That is deliberate. I wanted the moving parts to be visible and understandable instead of burying them inside a larger research codebase.
+This repository contains the orchestration layer and the project-specific logic. `COLMAP` handles camera reconstruction, and the GraphDeco Gaussian Splatting code handles optimization and rendering. That split keeps the repo small and makes the flow from video to result much easier to follow.
 
 ## Limitations
 
@@ -313,5 +316,3 @@ If needed, prefer the default preset before trying the high-quality preset.
 ## Current direction
 
 Right now the repository is about one thing: getting from a real handheld video to a convincing static 3D Gaussian result with code that is straightforward to read.
-
-Future ideas like semantic splat search, editable facial regions, or text-driven controls would sit on top of this foundation, but they are intentionally out of scope here.
