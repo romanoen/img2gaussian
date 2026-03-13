@@ -1,6 +1,6 @@
-This project takes a single smartphone video and turns it into a static 3D Gaussian scene that you can render from new viewpoints.
+This project take a single smartphone video and turns it into a static 3D gaussian scene that you can render from new viewpoints.
 
-I built it as a focused computer-vision portfolio project. The goal is to make the full path from raw video to a convincing result understandable, reproducible, and clean enough that another person can read the code without feeling lost.
+I built it as a focused computer-vision portfolio project. The goal is to make the full path from raw video to a convincing result understandable, reproducible, and clean enough.
 
 ## What the project actually does
 
