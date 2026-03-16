@@ -1,9 +1,13 @@
+"""CLI entrypoint for exporting the browser-based point-cloud viewer."""
+
 from __future__ import annotations
 
 from _shared import PROJECT_ROOT, build_parser, ensure_src_on_path
 
 
 def main() -> None:
+    """Build the HTML viewer for the latest trained model."""
+
     parser = build_parser("Build a browser-based Gaussian viewer for the latest trained model.")
     args = parser.parse_args()
 

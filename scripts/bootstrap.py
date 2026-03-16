@@ -1,3 +1,5 @@
+"""Bootstrap the upstream Gaussian Splatting checkout and basic prerequisites."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -11,6 +13,8 @@ GAUSSIAN_REF = "54c035f7834b564019656c3e3fcc3646292f727d"
 
 
 def main() -> None:
+    """Validate local tools and prepare the pinned Gaussian Splatting repo."""
+
     parser = build_parser("Check local tools and bootstrap the Gaussian Splatting baseline.")
     args = parser.parse_args()
 
@@ -26,6 +30,8 @@ def main() -> None:
         print(f"Found {binary}: {resolved}")
 
     repo_dir = config.gaussian_repo_dir
+    # Keeping the upstream repo pinned makes the rest of this project much less
+    # surprising to rerun a few weeks later.
     _clone_repo_if_needed(repo_dir, run_command)
     _checkout_repo_ref(repo_dir, run_command)
     _print_repo_status(repo_dir)
@@ -33,6 +39,8 @@ def main() -> None:
 
 
 def _clone_repo_if_needed(repo_dir: Path, run_command) -> None:
+    """Clone the upstream repository only when it is not already present."""
+
     if repo_dir.exists():
         git_dir = repo_dir / ".git"
         if not git_dir.exists():
@@ -48,6 +56,8 @@ def _clone_repo_if_needed(repo_dir: Path, run_command) -> None:
 
 
 def _checkout_repo_ref(repo_dir: Path, run_command) -> None:
+    """Move the repo to the exact commit this project was tested against."""
+
     status = subprocess.run(
         ["git", "-C", str(repo_dir), "status", "--porcelain", "--untracked-files=no"],
         check=False,
@@ -66,6 +76,8 @@ def _checkout_repo_ref(repo_dir: Path, run_command) -> None:
 
 
 def _print_repo_status(repo_dir: Path) -> None:
+    """Echo the checked-out commit for a quick sanity check."""
+
     head = subprocess.run(
         ["git", "-C", str(repo_dir), "rev-parse", "--short", "HEAD"],
         check=False,
@@ -77,6 +89,8 @@ def _print_repo_status(repo_dir: Path) -> None:
 
 
 def _print_python_dependency_hints(repo_dir: Path) -> None:
+    """Report missing Python modules without installing anything automatically."""
+
     missing_modules = []
     for module_name in (
         "torch",

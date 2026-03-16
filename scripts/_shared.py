@@ -1,3 +1,5 @@
+"""Shared CLI helpers used by the small entrypoint scripts."""
+
 from __future__ import annotations
 
 import argparse
@@ -10,12 +12,16 @@ SRC_DIR = PROJECT_ROOT / "src"
 
 
 def ensure_src_on_path() -> None:
+    """Make the local `src` package importable without installing the project."""
+
     src_str = str(SRC_DIR)
     if src_str not in sys.path:
         sys.path.insert(0, src_str)
 
 
 def build_parser(description: str) -> argparse.ArgumentParser:
+    """Create the standard parser shape used across the helper scripts."""
+
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
         "--config",

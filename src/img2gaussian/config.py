@@ -1,3 +1,5 @@
+"""Configuration loading and workspace path conventions for the project."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,6 +14,8 @@ ALLOWED_DATA_DEVICES = {"cuda", "cpu"}
 
 @dataclass(frozen=True)
 class AppConfig:
+    """Normalized application settings loaded from a YAML file."""
+
     input_video: Path
     workspace_dir: Path
     fps: float
@@ -24,6 +28,8 @@ class AppConfig:
     data_device: str
 
     def ensure_input_video_exists(self) -> None:
+        """Fail early when the configured input video is missing."""
+
         if not self.input_video.is_file():
             raise FileNotFoundError(
                 f"Input video not found: {self.input_video}. "
@@ -31,6 +37,8 @@ class AppConfig:
             )
 
     def ensure_gaussian_repo_exists(self) -> None:
+        """Make sure the baseline Gaussian Splatting checkout is available."""
+
         train_script = self.gaussian_repo_dir / "train.py"
         if not train_script.is_file():
             raise FileNotFoundError(
@@ -42,6 +50,8 @@ class AppConfig:
 
 @dataclass(frozen=True)
 class WorkspacePaths:
+    """Canonical filesystem layout derived from a single workspace directory."""
+
     workspace_dir: Path
     raw_frames_dir: Path
     selected_frames_dir: Path
@@ -60,6 +70,8 @@ class WorkspacePaths:
 
 
 def load_config(config_path: str | Path) -> AppConfig:
+    """Read, validate, and normalize a project configuration file."""
+
     config_file = Path(config_path).resolve()
     if not config_file.is_file():
         raise FileNotFoundError(f"Config file not found: {config_file}")
@@ -122,6 +134,8 @@ def load_config(config_path: str | Path) -> AppConfig:
 
 
 def build_workspace_paths(config: AppConfig) -> WorkspacePaths:
+    """Expand the configured workspace root into the directories each stage uses."""
+
     workspace_dir = config.workspace_dir
     return WorkspacePaths(
         workspace_dir=workspace_dir,
@@ -143,6 +157,8 @@ def build_workspace_paths(config: AppConfig) -> WorkspacePaths:
 
 
 def _resolve_project_path(value: str) -> Path:
+    """Resolve relative config paths against the repository root."""
+
     path = Path(value)
     if path.is_absolute():
         return path

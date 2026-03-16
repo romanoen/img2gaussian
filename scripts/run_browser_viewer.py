@@ -1,9 +1,13 @@
+"""CLI entrypoint for building and serving the browser viewer."""
+
 from __future__ import annotations
 
 from _shared import PROJECT_ROOT, build_parser, ensure_src_on_path
 
 
 def main() -> None:
+    """Build the browser viewer unless asked to serve an existing export."""
+
     parser = build_parser("Build and serve the browser-based Gaussian viewer.")
     parser.add_argument(
         "--port",
@@ -25,6 +29,7 @@ def main() -> None:
 
     config = load_config(args.config)
     if args.skip_build:
+        # This path matches the output location used by build_browser_viewer().
         viewer_html = build_workspace_paths(config).workspace_dir / "browser_gaussian_viewer" / "index.html"
     else:
         viewer_html = build_browser_viewer(config, project_root=PROJECT_ROOT)

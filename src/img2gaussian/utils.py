@@ -1,3 +1,5 @@
+"""Shared subprocess, filesystem, and discovery helpers."""
+
 from __future__ import annotations
 
 import shutil
@@ -12,6 +14,8 @@ class CommandError(RuntimeError):
 
 
 def ensure_binary(name: str) -> str:
+    """Return the absolute path to a required CLI tool."""
+
     binary = shutil.which(name)
     if not binary:
         raise FileNotFoundError(
@@ -26,9 +30,12 @@ def run_command(
     cwd: Path | None = None,
     env: dict[str, str] | None = None,
 ) -> None:
+    """Run an external command while echoing it for easier debugging."""
+
     printable = " ".join(command)
     print(f"[cmd] {printable}")
     merged_env = os.environ.copy()
+    # Let callers patch in build-specific variables without losing the parent env.
     if env:
         merged_env.update(env)
     completed = subprocess.run(command, cwd=cwd, env=merged_env, check=False)
@@ -39,12 +46,16 @@ def run_command(
 
 
 def safe_reset_dir(path: Path) -> None:
+    """Recreate a directory from scratch."""
+
     if path.exists():
         shutil.rmtree(path)
     path.mkdir(parents=True, exist_ok=True)
 
 
 def clear_matching_files(directory: Path, pattern: str) -> None:
+    """Delete files matching a glob without removing the directory itself."""
+
     directory.mkdir(parents=True, exist_ok=True)
     for item in directory.glob(pattern):
         if item.is_file():
@@ -52,11 +63,15 @@ def clear_matching_files(directory: Path, pattern: str) -> None:
 
 
 def copy_file(src: Path, dst: Path) -> None:
+    """Copy a file while creating the destination parent directory if needed."""
+
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, dst)
 
 
 def find_latest_point_cloud(model_dir: Path) -> Path:
+    """Pick the point cloud from the highest available training iteration."""
+
     point_cloud_root = model_dir / "point_cloud"
     candidates = sorted(point_cloud_root.glob("iteration_*/point_cloud.ply"))
     if not candidates:
@@ -68,6 +83,8 @@ def find_latest_point_cloud(model_dir: Path) -> Path:
 
 
 def list_image_files(directory: Path) -> list[Path]:
+    """Collect supported image files in a stable order."""
+
     patterns = ("*.png", "*.jpg", "*.jpeg")
     files: list[Path] = []
     for pattern in patterns:
@@ -76,10 +93,14 @@ def list_image_files(directory: Path) -> list[Path]:
 
 
 def python_executable() -> str:
+    """Return the Python interpreter that launched the current process."""
+
     return sys.executable
 
 
 def _iteration_number(path: Path) -> int:
+    """Extract the numeric iteration marker from a checkpoint path."""
+
     for part in path.parts:
         if part.startswith("iteration_"):
             return int(part.split("_", maxsplit=1)[1])

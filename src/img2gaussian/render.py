@@ -1,3 +1,5 @@
+"""Rendering helpers plus small demo-asset generation utilities."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -5,8 +7,16 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from .config import AppConfig, build_workspace_paths
-from .utils import CommandError, copy_file, ensure_binary, list_image_files, python_executable, run_command, safe_reset_dir
+from .config import AppConfig, WorkspacePaths, build_workspace_paths
+from .utils import (
+    CommandError,
+    copy_file,
+    ensure_binary,
+    list_image_files,
+    python_executable,
+    run_command,
+    safe_reset_dir,
+)
 
 VIDEO_FILTER = (
     "scale=1280:720:force_original_aspect_ratio=decrease,"
@@ -15,6 +25,8 @@ VIDEO_FILTER = (
 
 
 def run_rendering(config: AppConfig) -> dict[str, Path]:
+    """Render the trained model and assemble the lightweight demo outputs."""
+
     config.ensure_gaussian_repo_exists()
     ensure_binary("ffmpeg")
 
@@ -57,7 +69,13 @@ def run_rendering(config: AppConfig) -> dict[str, Path]:
     return {"demo_video": paths.demo_video_path, "stills_dir": paths.stills_dir}
 
 
-def _collect_render_frames(paths, iteration: int, render_mode: str) -> list[Path]:
+def _collect_render_frames(
+    paths: WorkspacePaths,
+    iteration: int,
+    render_mode: str,
+) -> list[Path]:
+    """Find the render frames emitted by the upstream script."""
+
     test_dir = paths.model_dir / "test" / f"ours_{iteration}" / "renders"
     train_dir = paths.model_dir / "train" / f"ours_{iteration}" / "renders"
 
@@ -73,6 +91,8 @@ def _collect_render_frames(paths, iteration: int, render_mode: str) -> list[Path
 
 
 def _export_stills(render_frames: list[Path], output_dir: Path, count: int) -> list[Path]:
+    """Copy a few representative render frames into a stable output folder."""
+
     still_paths: list[Path] = []
     for index, frame_path in enumerate(render_frames[:count], start=1):
         target_path = output_dir / f"still_{index:02d}{frame_path.suffix.lower()}"
@@ -83,10 +103,12 @@ def _export_stills(render_frames: list[Path], output_dir: Path, count: int) -> l
 
 def _build_demo_video(
     config: AppConfig,
-    paths,
+    paths: WorkspacePaths,
     render_frames: list[Path],
     hero_still: Path,
 ) -> None:
+    """Assemble a short presentation video from the intermediate artifacts."""
+
     ensure_binary("ffmpeg")
     safe_reset_dir(paths.demo_assets_dir)
 
@@ -102,6 +124,8 @@ def _build_demo_video(
     recon_segment = paths.demo_assets_dir / "segment_03_reconstruction.mp4"
     novel_segment = paths.demo_assets_dir / "segment_04_novel_views.mp4"
 
+    # The sequence is intentionally simple: input clip, frame grid, a hero still,
+    # then the rendered sweep.
     _build_input_segment(config.input_video, input_segment)
     _build_still_segment(frame_grid, frames_segment, duration_seconds=2)
     _build_still_segment(hero_still, recon_segment, duration_seconds=2)
@@ -135,6 +159,8 @@ def _build_demo_video(
 
 
 def _build_input_segment(input_video: Path, output_video: Path) -> None:
+    """Trim and normalize the source video into the first demo segment."""
+
     command = [
         "ffmpeg",
         "-hide_banner",
@@ -158,6 +184,8 @@ def _build_input_segment(input_video: Path, output_video: Path) -> None:
 
 
 def _build_still_segment(image_path: Path, output_video: Path, duration_seconds: int) -> None:
+    """Turn a single image into a fixed-length video segment."""
+
     command = [
         "ffmpeg",
         "-hide_banner",
@@ -183,11 +211,14 @@ def _build_still_segment(image_path: Path, output_video: Path, duration_seconds:
 
 
 def _build_novel_view_segment(render_frames: list[Path], output_video: Path) -> None:
+    """Encode the rendered frames as a short fly-around segment."""
+
     manifest_path = output_video.parent / "novel_views_manifest.txt"
     with manifest_path.open("w", encoding="utf-8") as handle:
         for frame_path in render_frames:
             handle.write(f"file '{frame_path.as_posix()}'\n")
             handle.write("duration 0.12\n")
+        # Repeating the last frame keeps ffmpeg's concat demuxer from dropping it.
         handle.write(f"file '{render_frames[-1].as_posix()}'\n")
 
     command = [
@@ -215,6 +246,8 @@ def _build_novel_view_segment(render_frames: list[Path], output_video: Path) -> 
 
 
 def _write_contact_sheet(image_paths: list[Path], output_path: Path, columns: int) -> None:
+    """Lay out a small grid of selected frames for the demo video."""
+
     if not image_paths:
         raise RuntimeError("Cannot build a frame grid without selected frames.")
 
@@ -231,6 +264,7 @@ def _write_contact_sheet(image_paths: list[Path], output_path: Path, columns: in
         fitted = _fit_image_to_cell(image, cell_width, cell_height)
         row = index // columns
         col = index % columns
+        # Center each fitted image so mismatched aspect ratios still look tidy.
         y0 = row * cell_height + (cell_height - fitted.shape[0]) // 2
         x0 = col * cell_width + (cell_width - fitted.shape[1]) // 2
         canvas[y0 : y0 + fitted.shape[0], x0 : x0 + fitted.shape[1]] = fitted
@@ -242,6 +276,8 @@ def _write_contact_sheet(image_paths: list[Path], output_path: Path, columns: in
 
 
 def _fit_image_to_cell(image: np.ndarray, width: int, height: int) -> np.ndarray:
+    """Resize an image to fit inside a contact-sheet cell."""
+
     scale = min(width / image.shape[1], height / image.shape[0])
     new_width = max(1, int(round(image.shape[1] * scale)))
     new_height = max(1, int(round(image.shape[0] * scale)))

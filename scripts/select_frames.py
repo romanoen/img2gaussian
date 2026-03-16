@@ -1,9 +1,13 @@
+"""CLI entrypoint for frame selection."""
+
 from __future__ import annotations
 
 from _shared import build_parser, ensure_src_on_path
 
 
 def main() -> None:
+    """Pick the reconstruction-friendly subset of extracted frames."""
+
     parser = build_parser("Select sharp, evenly spaced frames for COLMAP and training.")
     args = parser.parse_args()
 

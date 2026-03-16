@@ -1,9 +1,13 @@
+"""CLI entrypoint for the full reconstruction pipeline."""
+
 from __future__ import annotations
 
 from _shared import build_parser, ensure_src_on_path
 
 
 def main() -> None:
+    """Run every stage from frame extraction through render export."""
+
     parser = build_parser("Run the full img2gaussian pipeline from video to demo render.")
     args = parser.parse_args()
 

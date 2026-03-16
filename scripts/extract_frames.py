@@ -1,9 +1,13 @@
+"""CLI entrypoint for the frame extraction stage."""
+
 from __future__ import annotations
 
 from _shared import build_parser, ensure_src_on_path
 
 
 def main() -> None:
+    """Extract frames from the configured input video."""
+
     parser = build_parser("Extract frames from the configured input video.")
     args = parser.parse_args()
 

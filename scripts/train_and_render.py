@@ -1,9 +1,13 @@
+"""CLI entrypoint for training plus render export."""
+
 from __future__ import annotations
 
 from _shared import build_parser, ensure_src_on_path
 
 
 def main() -> None:
+    """Train the Gaussian model and export the final demo assets."""
+
     parser = build_parser("Train the Gaussian model and export renders.")
     args = parser.parse_args()
 

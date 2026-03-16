@@ -1,10 +1,14 @@
+"""COLMAP reconstruction stage for turning selected frames into a dataset."""
+
 from __future__ import annotations
 
-from .config import AppConfig, build_workspace_paths
+from .config import AppConfig, WorkspacePaths, build_workspace_paths
 from .utils import ensure_binary, list_image_files, run_command, safe_reset_dir
 
 
 def run_colmap(config: AppConfig) -> None:
+    """Run the COLMAP steps needed by the Gaussian Splatting training code."""
+
     ensure_binary("colmap")
     paths = build_workspace_paths(config)
 
@@ -18,6 +22,8 @@ def run_colmap(config: AppConfig) -> None:
     safe_reset_dir(paths.dataset_dir)
     paths.distorted_sparse_dir.mkdir(parents=True, exist_ok=True)
 
+    # The baseline pipeline expects a single-camera sequence and a COLMAP-style
+    # dataset folder, so we keep the commands fairly conservative here.
     feature_command = [
         "colmap",
         "feature_extractor",
@@ -85,7 +91,9 @@ def run_colmap(config: AppConfig) -> None:
     print(f"COLMAP dataset ready at {paths.dataset_dir}")
 
 
-def _normalize_sparse_directory(paths) -> None:
+def _normalize_sparse_directory(paths: WorkspacePaths) -> None:
+    """Handle both nested and flat sparse-directory layouts from COLMAP."""
+
     sparse_root = paths.dataset_dir / "sparse"
     if paths.dataset_sparse_dir.exists():
         return

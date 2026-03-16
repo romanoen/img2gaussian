@@ -1,3 +1,5 @@
+"""Helpers for exporting a browser-friendly point-cloud viewer."""
+
 from __future__ import annotations
 
 import functools
@@ -13,6 +15,8 @@ DEFAULT_HARMONIC_BANDS = 1
 
 
 def ensure_browser_viewer_dependencies(project_root: Path) -> Path:
+    """Install the minimal Node dependency needed to convert the point cloud."""
+
     ensure_binary("npm")
     viewer_tool_dir = project_root / "browser_viewer"
     package_json = viewer_tool_dir / "package.json"
@@ -33,6 +37,8 @@ def ensure_browser_viewer_dependencies(project_root: Path) -> Path:
 
 
 def build_browser_viewer(config: AppConfig, project_root: Path) -> Path:
+    """Convert the newest point cloud into a self-contained browser viewer."""
+
     binary = ensure_browser_viewer_dependencies(project_root)
     paths = build_workspace_paths(config)
     point_cloud_path = find_latest_point_cloud(paths.model_dir)
@@ -58,6 +64,8 @@ def build_browser_viewer(config: AppConfig, project_root: Path) -> Path:
 
 
 def serve_browser_viewer(viewer_html_path: Path, port: int = DEFAULT_PORT) -> None:
+    """Serve the generated viewer directory over a tiny local HTTP server."""
+
     if not viewer_html_path.is_file():
         raise FileNotFoundError(f"Browser viewer HTML not found: {viewer_html_path}")
     directory = viewer_html_path.parent

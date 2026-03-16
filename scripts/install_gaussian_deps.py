@@ -1,3 +1,5 @@
+"""Install or verify the Python pieces required by Gaussian Splatting."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -8,6 +10,8 @@ from _shared import build_parser, ensure_src_on_path
 
 
 def main() -> None:
+    """Install the missing runtime and extension dependencies into the active env."""
+
     parser = build_parser(
         "Install or verify the Gaussian Splatting Python dependencies in the active environment."
     )
@@ -54,6 +58,8 @@ def main() -> None:
         )
 
     if missing_modules:
+        # The custom CUDA extensions build more reliably when we point them at the
+        # active conda-style toolchain and CUDA headers explicitly.
         env = _build_extension_env(Path(sys.prefix))
         run_command(
             [
@@ -76,6 +82,8 @@ def main() -> None:
 
 
 def _build_extension_env(prefix: Path) -> dict[str, str]:
+    """Construct the environment variables expected by the CUDA extension builds."""
+
     cuda_include = prefix / "targets" / "x86_64-linux" / "include"
     cuda_lib = prefix / "targets" / "x86_64-linux" / "lib"
     cc = prefix / "bin" / "x86_64-conda-linux-gnu-cc"
@@ -94,6 +102,8 @@ def _build_extension_env(prefix: Path) -> dict[str, str]:
 
 
 def _verify_runtime() -> None:
+    """Confirm that the installed PyTorch build can access CUDA."""
+
     import torch
 
     if not torch.cuda.is_available():

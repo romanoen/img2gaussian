@@ -1,3 +1,5 @@
+"""Model training wrapper around the upstream Gaussian Splatting repo."""
+
 from __future__ import annotations
 
 from .config import AppConfig, build_workspace_paths
@@ -5,6 +7,8 @@ from .utils import CommandError, python_executable, run_command
 
 
 def run_training(config: AppConfig) -> None:
+    """Launch upstream training with the dataset produced by COLMAP."""
+
     config.ensure_gaussian_repo_exists()
     _ensure_torch_cuda()
 
@@ -24,6 +28,8 @@ def run_training(config: AppConfig) -> None:
         str(paths.model_dir),
         "--iterations",
         str(config.train_iterations),
+        # Saving exactly at the final step gives the render stage a predictable
+        # checkpoint path to look for later.
         "--save_iterations",
         str(config.train_iterations),
         "--eval",
@@ -52,6 +58,8 @@ def run_training(config: AppConfig) -> None:
 
 
 def _ensure_torch_cuda() -> None:
+    """Check that PyTorch is installed and can actually see a CUDA device."""
+
     try:
         import torch
     except ImportError as exc:
